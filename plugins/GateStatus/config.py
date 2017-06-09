@@ -12,5 +12,17 @@ def configure(advanced):
     conf.registerPlugin('GateStatus', True)
 
 GateStatus = conf.registerPlugin('GateStatus')
+conf.registerGlobalValue(GateStatus, 'changeID',
+    registry.String('', _("""Change ID used for reporting""")))
+conf.registerGlobalValue(GateStatus, 'changeURL',
+    registry.String('', _("""URL to check the results,""")))
+conf.registerGlobalValue(GateStatus, 'timeLimit',
+    registry.NonNegativeInteger(24, _("""Maximum comment age in hours that gets
+    parsed. Avoids reporting on old and obsolete gate jobs. Defaults to
+    24.""")))
+conf.registerGlobalValue(GateStatus, 'sshCommand',
+    registry.String('', _("""Command prefix used to fetch data from Gerrit. The
+    bot's user should have passwordless ssh set up. Example: ssh -p 29418
+    myuser@review.openstack.org""")))
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:

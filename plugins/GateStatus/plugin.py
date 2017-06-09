@@ -18,12 +18,13 @@ class GateStatus(callbacks.Plugin):
         self.__parent = super(GateStatus, self)
         self.__parent.__init__(irc)
 
-    def fetch_comments(self, change_id, user, hours):
+    def fetch_comments(self):
         # only care about comments in the last 24 hours
-        limit = time.time() - (60*60*24)
+        limit = time.time() - (60*60*self.registryValue('timeLimit'))
 
-        cmd = ("ssh -p 29418 adarazs@review.openstack.org gerrit query "
-            "--format json --comments 10fe7e27a0f44253cdf8e7f6079db684dad47205")
+        cmd = (' '.join([self.registryValue('sshCommand'),
+                         "gerrit query --format json --comments",
+                         self.registryValue('changeID')]))
         output = subprocess.check_output(cmd.split(" "), stderr=subprocess.STDOUT)
         output = json.loads(output.split("\n")[0])
 
@@ -51,8 +52,7 @@ class GateStatus(callbacks.Plugin):
         return results
 
     def job_report(self):
-        comments = self.fetch_comments("10fe7e27a0f44253cdf8e7f6079db684dad47205",
-                                "adarazs", 24)
+        comments = self.fetch_comments()
         results = self.check_comments(comments)
         #import pprint
         #pprint.pprint(results)
@@ -64,9 +64,9 @@ class GateStatus(callbacks.Plugin):
                 failing_jobs.append(job)
 
         if len(failing_jobs) > 0:
-            return "FAILING GATE JOBS: %s | check logs @ " \
-                   "https://review.openstack.org/430277 and fix them ASAP." % \
-                   ', '.join(failing_jobs)
+            return "FAILING GATE JOBS: %s | check logs @ %s " \
+                   "and fix them ASAP." % \
+                   (', '.join(failing_jobs), self.registryValue('changeURL'))
         else:
             return "Gate jobs are working fine."
 
@@ -76,7 +76,22 @@ class GateStatus(callbacks.Plugin):
 
         Returns the status of the quickstart-extras gate jobs.
         """
-        irc.reply(self.job_report(), prefixNick=False)
+        config_missing = []
+        for config_name in ["sshCommand", "changeID", "changeURL"]:
+            if self.registryValue(config_name) == "":
+                config_missing.append(config_name)
+        if len(config_missing) > 0:
+            msg = ("Missing value for config %s. Use "
+                   "'config plugins.GateStatus.<config_name> <value>' "
+                   "to setup this plugin. Check "
+                   "'config help plugins.GateStatus.<config_name>' "
+                   "for detailed help and "
+                   "'config list plugins.GateStatus' "
+                   "for all available variables."
+                   % (', '.join(config_missing)))
+            irc.reply(msg)
+        else:
+            irc.reply(self.job_report(), prefixNick=False)
     gatestatus = wrap(gatestatus)
 
 Class = GateStatus
