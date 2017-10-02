@@ -31,7 +31,7 @@ class GateStatus(callbacks.Plugin):
         comments = []
         for comment in output['comments']:
             if comment['reviewer']['username'] in \
-                ['jenkins', 'rdo-ci', 'rdo-ci-downstream'] and \
+                self.registryValue('userFilter') and \
                 comment['timestamp'] > limit:
                 comments.append(comment)
         return comments
@@ -70,6 +70,29 @@ class GateStatus(callbacks.Plugin):
         else:
             return "Gate jobs are working fine."
 
+    def user_report(self):
+        limit = time.time() - (60*60*self.registryValue('timeLimit'))
+
+        cmd = (' '.join([self.registryValue('sshCommand'),
+                         "gerrit query --format json --comments",
+                         self.registryValue('changeID')]))
+        output = subprocess.check_output(cmd.split(" "), stderr=subprocess.STDOUT)
+        output = json.loads(output.split("\n")[0])
+
+        users = {}
+        for comment in output['comments']:
+            if comment['timestamp'] > limit:
+                username = comment['reviewer']['username']
+                if username in users.keys():
+                    users[username] += 1
+                else:
+                    users[username] = 1
+        msg = 'Current userFilter: %s; ' % self.registryValue('userFilter')
+        msg += 'all users and comments within the timeLimit: '
+        for names, comments in users.items():
+            msg += '%s (%s), ' % (names, comments)
+        return msg[:-2]
+
     @internationalizeDocstring
     def gatestatus(self, irc, msg, args):
         """(no arguments)
@@ -93,6 +116,14 @@ class GateStatus(callbacks.Plugin):
         else:
             irc.reply(self.job_report(), prefixNick=False)
     gatestatus = wrap(gatestatus)
+
+    @internationalizeDocstring
+    def printusers(self, irc, msg, args):
+        """(no arguments)
+
+        Print all the users that commented on the test change. Userful for
+        figuring out the users for the userFilter variable"""
+        irc.reply(self.user_report(), prefixNick=False)
 
 Class = GateStatus
 

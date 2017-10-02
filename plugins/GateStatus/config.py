@@ -24,5 +24,8 @@ conf.registerGlobalValue(GateStatus, 'sshCommand',
     registry.String('', _("""Command prefix used to fetch data from Gerrit. The
     bot's user should have passwordless ssh set up. Example: ssh -p 29418
     myuser@review.openstack.org""")))
+conf.registerGlobalValue(GateStatus, 'userFilter',
+    registry.SpaceSeparatedListOfStrings([], _("""Only try to parse comment
+    from these users""")))
 
 # vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
