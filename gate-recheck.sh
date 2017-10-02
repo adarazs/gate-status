@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CHANGE_ID="10fe7e27a0f44253cdf8e7f6079db684dad47205"
+CHANGE_ID="I2e4b8f2db0e245bef73b99e12975ae275104f9c4"
 
 # get the latest commit hash
 HASH=$(ssh -p 29418 adarazs@review.openstack.org gerrit query --format json --current-patch-set $CHANGE_ID |jq -r '.["currentPatchSet"]["revision"]'|head -n 1)
