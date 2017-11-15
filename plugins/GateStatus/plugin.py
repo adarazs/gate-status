@@ -64,7 +64,7 @@ class GateStatus(callbacks.Plugin):
                 failing_jobs.append(job)
 
         if len(failing_jobs) > 0:
-            return "FAILING GATE JOBS: %s | check logs @ %s " \
+            return "FAILING CHECK JOBS: %s | check logs @ %s " \
                    "and fix them ASAP." % \
                    (', '.join(failing_jobs), self.registryValue('changeURL'))
         else:
